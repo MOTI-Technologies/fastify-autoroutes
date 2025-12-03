@@ -1,7 +1,8 @@
 {
-    "name": "fastify-autoroutes",
+    "name": "@moti-technologies/fastify-autoroutes",
     "version": "5.0.0",
     "description": "Map directory structure to routes",
+    "private": true,
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -27,9 +28,12 @@
         "prepare": "husky install",
         "prepublishOnly": "npm run build"
     },
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com"
+    },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/GiovanniCardamone/fastify-autoroutes.git"
+        "url": "git+https://github.com/MOTI-Technologies/fastify-autoroutes.git"
     },
     "keywords": [
         "fastify",
@@ -42,9 +46,9 @@
     "author": "Giovanni Cardamone",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/GiovanniCardamone/fastify-autoroutes/issues"
+        "url": "https://github.com/MOTI-Technologies/fastify-autoroutes/issues"
     },
-    "homepage": "https://github.com/GiovanniCardamone/fastify-autoroutes#readme",
+    "homepage": "https://github.com/MOTI-Technologies/fastify-autoroutes#readme",
     "devDependencies": {
         "@giovannicardamone/prettier-config": "^0.1.3",
         "@types/node": "^20.17.9",
