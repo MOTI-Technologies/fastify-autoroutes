@@ -1,406 +1,222 @@
+import { describe, test, expect } from 'vitest'
 import fastify from 'fastify'
-import autoroutes from '../src'
-import { mock, restore } from './utils/mock'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import autoroutes from '../src/index.js'
 
-const exampleGetRoute = `module.exports = function (server) {
-  return {
-    get: {
-      handler: function (request, reply) {
-        return reply.send('get')
-      }
-    }
-  }
-}
-`
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const fixturesPath = path.join(__dirname, 'fixtures')
 
-const exampleGetRouteUrlParam = `module.exports = function (server) {
-  return {
-    get: {
-      handler: function (request, reply) {
-        return reply.send(request.params.PARAM)
-      }
-    }
-  }
-}
-`
-
-const exampleGetRouteJSONParam = `module.exports = function (server) {
-  return {
-    get: {
-      handler: function (request, reply) {
-        return reply.send(JSON.stringify(request.params))
-      }
-    }
-  }
-}
-`
-
-const exampleGetRouteDefaultModule = `
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-exports.default = function () {
-  return {
-    get: {
-      handler: function (request, reply) {
-        return reply.send('get')
-      }
-    }
-  };
-};
-`
 describe('Routes', () => {
-
-  beforeEach(() => {
-    //
-  })
-
-  afterEach(() => {
-    restore()
-  })
-
-  test('simple index', (done) => {
+  test('simple index', async () => {
     const server = fastify()
 
-    const dir = mock('routes', {
-      'index.js': exampleGetRoute,
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
     })
 
-    server.register(autoroutes, {
-      dir
+    const res = await server.inject({
+      method: 'GET',
+      url: '/',
     })
 
-    server.inject(
-      {
-        method: 'GET',
-        url: '/',
-      },
-      (err, res) => {
-        expect(err).toBe(null)
-        expect(res.payload).toBe('get')
-        done()
-      }
-    )
+    expect(res.statusCode).toBe(200)
+    expect(res.payload).toBe('get')
   })
 
-  test('nested routes', (done) => {
+  test('nested routes', async () => {
     const server = fastify()
 
-    const dir = mock('routes', {
-      users: {
-        'foo.js': exampleGetRoute,
-      },
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
     })
 
-    server.register(autoroutes, {
-      dir
+    const res = await server.inject({
+      method: 'GET',
+      url: '/users/foo',
     })
 
-    server.inject(
-      {
-        method: 'GET',
-        url: '/users/foo',
-      },
-      (err, res) => {
-        expect(err).toBe(null)
-        expect(res.payload).toBe('get')
-        done()
-      }
-    )
+    expect(res.statusCode).toBe(200)
+    expect(res.payload).toBe('get')
   })
 
-  test('nested routes with trailing slashes', (done) => {
+  test('nested routes with trailing slashes', async () => {
     const server = fastify()
 
-    const dir = mock('routes', {
-      users: {
-        foo: {
-          'index.js': exampleGetRoute,
-        },
-      },
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
     })
 
-    server.register(autoroutes, {
-      dir
+    const res = await server.inject({
+      method: 'GET',
+      url: '/users/foo/',
     })
 
-    server.inject(
-      {
-        method: 'GET',
-        url: '/users/foo/',
-      },
-      (err, res) => {
-        expect(err).toBe(null)
-        expect(res.payload).toBe('get')
-        done()
-      }
-    )
+    expect(res.statusCode).toBe(200)
+    expect(res.payload).toBe('get')
   })
 
-  test('nested routes with url parameter', (done) => {
+  test('nested routes with url parameter', async () => {
     const server = fastify()
 
-    const dir = mock('routes', {
+    const userId = 'test-user-123'
 
-      users: {
-        '{PARAM}.js': exampleGetRouteUrlParam,
-      },
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
     })
 
-    server.register(autoroutes, {
-      dir
+    const res = await server.inject({
+      method: 'GET',
+      url: `/users/${userId}`,
     })
 
-    const userId = 'foo'
-
-    server.inject(
-      {
-        method: 'GET',
-        url: `/users/${userId}`,
-      },
-      (err, res) => {
-        expect(err).toBe(null)
-        expect(res.payload).toBe(userId)
-        done()
-      }
-    )
+    expect(res.statusCode).toBe(200)
+    expect(res.payload).toBe(userId)
   })
 
-  test(
-    'url parameters with : (not on windows)', (done) => {
-      if (process.platform === 'win32') {
-        done()
-      } else {
-        const server = fastify()
-
-        const dir = mock('routes', {
-          users: {
-            '{USERID}.js': exampleGetRouteJSONParam,
-            '{USERID}': {
-              'index.js': exampleGetRouteJSONParam,
-            },
-          },
-        })
-
-        server.register(autoroutes, {
-          dir,
-        })
-
-        const USERID = 'foo'
-
-        server.inject(
-          {
-            method: 'GET',
-            url: `/users/${USERID}`,
-          },
-          (err, res) => {
-            expect(err).toBe(null)
-            expect(JSON.parse(res.payload).USERID).toBe(USERID)
-
-            server.inject(
-              {
-                method: 'GET',
-                url: `/users/${USERID}/`,
-              },
-              (err, res) => {
-                expect(err).toBe(null)
-                expect(JSON.parse(res.payload).USERID).toBe(USERID)
-                done()
-              }
-            )
-          }
-        )
-      }
+  test('url parameters with : (not on windows)', async () => {
+    if (process.platform === 'win32') {
+      return
     }
-  )
 
-  test(
-    'nested routes with url parameter with trailing slashes', (done) => {
-      const server = fastify()
-
-      const dir = mock('dir', {
-        users: {
-          '{PARAM}': {
-            'index.js': exampleGetRouteUrlParam,
-          },
-        },
-      })
-
-      server.register(autoroutes, {
-        dir,
-      })
-
-      const userId = 'foo'
-
-      server.inject(
-        {
-          method: 'GET',
-          url: `/users/${userId}/`,
-        },
-        (err, res) => {
-          expect(err).toBe(null)
-          expect(res.payload).toBe(userId)
-          done()
-        }
-      )
-    }
-  )
-
-  test('example es6 exports default module', (done) => {
     const server = fastify()
 
-    const dir = mock('dir', {
-      'index.js': exampleGetRouteDefaultModule,
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
     })
 
-    server.register(autoroutes, {
-      dir
+    const USERID = 'test-user-456'
+
+    const res1 = await server.inject({
+      method: 'GET',
+      url: `/users/${USERID}`,
     })
 
-    server.inject(
-      {
-        method: 'GET',
-        url: '/',
-      },
-      (err, res) => {
-        expect(err).toBe(null)
-        expect(res.payload).toBe('get')
-        done()
-      }
-    )
+    expect(res1.statusCode).toBe(200)
+    expect(res1.payload).toBe(USERID)
+
+    const res2 = await server.inject({
+      method: 'GET',
+      url: `/users/${USERID}/`,
+    })
+
+    expect(res2.statusCode).toBe(200)
+    expect(res2.payload).toBe(USERID)
   })
 
-  test(
-    'skip routes with starting . charater', (done) => {
-      const server = fastify()
-
-      const dir = mock('dir', {
-
-        '.hello.js': exampleGetRouteDefaultModule,
-      })
-
-      server.register(autoroutes, {
-        dir,
-      })
-
-      server.inject(
-        {
-          method: 'GET',
-          url: '/hello',
-        },
-        (err, res) => {
-          expect(res.statusCode).toBe(404)
-
-          server.inject(
-            {
-              method: 'GET',
-              url: '/.hello',
-            },
-            (err, res) => {
-              expect(res.statusCode).toBe(404)
-
-              done()
-            }
-          )
-        }
-      )
-    }
-  )
-
-  test(
-    'skip routes with starting _ charater', (done) => {
-      const server = fastify()
-
-      const dir = mock('dir', {
-        '_hello.js': exampleGetRouteDefaultModule,
-
-      })
-
-      server.register(autoroutes, {
-        dir
-      })
-
-      server.inject(
-        {
-          method: 'GET',
-          url: '/hello',
-        },
-        (err, res) => {
-          expect(res.statusCode).toBe(404)
-
-          server.inject(
-            {
-              method: 'GET',
-              url: '/_hello',
-            },
-            (err, res) => {
-              expect(res.statusCode).toBe(404)
-              done()
-            }
-          )
-        }
-      )
-    }
-  )
-
-  test('skip routes ending with .test.js or .test.ts', (done) => {
+  test('nested routes with url parameter with trailing slashes', async () => {
     const server = fastify()
 
-    const dir = mock('dir', {
-      'someJsRoute.test.js': exampleGetRouteDefaultModule,
-      'someTsRoute.test.ts': exampleGetRouteDefaultModule,
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes-with-params'),
     })
 
-    server.register(autoroutes, {
-      dir
+    const userId = 'foo-bar-baz'
+
+    const res = await server.inject({
+      method: 'GET',
+      url: `/users/${userId}/`,
     })
 
-    server.inject(
-      {
-        method: 'GET',
-        url: '/someJsRoute',
-      },
-      (err, res) => {
-        expect(res.statusCode).toBe(404)
-
-        server.inject(
-          {
-            method: 'GET',
-            url: '/someTsRoute',
-          },
-          (err, res) => {
-            expect(res.statusCode).toBe(404)
-            done()
-          }
-        )
-      }
-    )
+    expect(res.statusCode).toBe(200)
+    expect(res.payload).toBe(userId)
   })
 
-  test('expect route /status to work', (done) => {
+  test('example es6 exports default module', async () => {
     const server = fastify()
 
-    const dir = mock('routes', {
-      a: {'status.js': exampleGetRoute, }
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes-default-export'),
     })
 
-    server.register(autoroutes, {
-      dir
+    const res = await server.inject({
+      method: 'GET',
+      url: '/',
     })
 
-    server.inject(
-      {
-        method: 'GET',
-        url: '/a/status',
-      },
-      (err, res) => {
-        expect(err).toBe(null)
-        expect(res.payload).toBe('get')
-        done()
-      }
-    )
+    expect(res.statusCode).toBe(200)
+    expect(res.payload).toBe('get')
+  })
+
+  test('skip routes with starting . charater', async () => {
+    const server = fastify()
+
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
+    })
+
+    const res1 = await server.inject({
+      method: 'GET',
+      url: '/ignored',
+    })
+
+    expect(res1.statusCode).toBe(404)
+
+    const res2 = await server.inject({
+      method: 'GET',
+      url: '/.ignored',
+    })
+
+    expect(res2.statusCode).toBe(404)
+  })
+
+  test('skip routes with starting _ charater', async () => {
+    const server = fastify()
+
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
+    })
+
+    const res1 = await server.inject({
+      method: 'GET',
+      url: '/ignored',
+    })
+
+    expect(res1.statusCode).toBe(404)
+
+    const res2 = await server.inject({
+      method: 'GET',
+      url: '/_ignored',
+    })
+
+    expect(res2.statusCode).toBe(404)
+  })
+
+  test('skip routes ending with .test.js or .test.ts', async () => {
+    const server = fastify()
+
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
+    })
+
+    const res1 = await server.inject({
+      method: 'GET',
+      url: '/ignored',
+    })
+
+    expect(res1.statusCode).toBe(404)
+
+    const res2 = await server.inject({
+      method: 'GET',
+      url: '/ignored.test',
+    })
+
+    expect(res2.statusCode).toBe(404)
+  })
+
+  test('expect route /status to work', async () => {
+    const server = fastify()
+
+    await server.register(autoroutes, {
+      dir: path.join(fixturesPath, 'routes'),
+    })
+
+    const res = await server.inject({
+      method: 'GET',
+      url: '/a/status',
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.payload).toBe('get')
   })
 })

@@ -1,10 +1,15 @@
 import fastify from 'fastify'
 import autoroutes from 'fastify-autoroutes'
 
-const server = fastify()
+async function start() {
+  const server = fastify()
 
-server.register(autoroutes, {
-  dir: './routes',
-})
+  server.register(autoroutes, {
+    dir: './routes',
+  })
 
-server.listen(9999)
+  await server.listen({ port: 9999 })
+  console.log('Server listening on http://localhost:9999')
+}
+
+start()

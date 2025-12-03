@@ -1,72 +1,45 @@
+import { describe, test, expect } from 'vitest'
 import fastify from 'fastify'
-import autoroutes, { ERROR_LABEL } from '../src'
-import { restore } from './utils/mock'
-
+import autoroutes, { ERROR_LABEL } from '../src/index.js'
 
 describe('Options', () => {
-
-  beforeEach(() => {
-    //
-  })
-
-  afterEach(() => {
-    restore()
-  })
-
-  test('no dir parameters', (done) => {
+  test('no dir parameters', async () => {
     const server = fastify()
 
-    server.register(autoroutes)
-
-    server.inject(
-      {
-        method: 'GET',
-        url: '/does-not-really-matter',
-      },
-      (error) => {
-        expect(error.message.startsWith(ERROR_LABEL)).toBeTruthy()
-        done()
-      }
+    await expect(async () => {
+      await server.register(autoroutes)
+      await server.ready()
+    }).rejects.toThrow(
+      expect.objectContaining({
+        message: expect.stringContaining(ERROR_LABEL),
+      })
     )
   })
 
-  test('invalid dir parameters', (done) => {
+  test('invalid dir parameters', async () => {
     const server = fastify()
 
-    // @ts-expect-error not valid 33 as dir
-    server.register(autoroutes, {
-      dir: 33,
-    })
-
-    server.inject(
-      {
-        method: 'GET',
-        url: '/does-not-really-matter',
-      },
-      (error, res) => {
-        console.log({ error, res })
-        expect(error).not.toBe(undefined)
-        done()
-      }
-    )
+    await expect(async () => {
+      // @ts-expect-error Testing invalid parameter type
+      await server.register(autoroutes, {
+        dir: 33,
+      })
+      await server.ready()
+    }).rejects.toThrow()
   })
 
-  test('dir does not exists', (done) => {
+  test('dir does not exists', async () => {
     const server = fastify()
 
-    server.register(autoroutes, {
-      dir: './this-directory-does-not-exists',
-    })
-
-    server.inject(
-      {
-        method: 'GET',
-        url: '/does-not-really-matter',
-      },
-      (error) => {
-        expect(error.message.startsWith(ERROR_LABEL)).toBeTruthy()
-        done()
-      }
+    await expect(async () => {
+      await server.register(autoroutes, {
+        dir: './this-directory-does-not-exists',
+      })
+      await server.ready()
+    }).rejects.toThrow(
+      expect.objectContaining({
+        message: expect.stringContaining(ERROR_LABEL),
+      })
     )
   })
 })

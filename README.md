@@ -20,6 +20,16 @@
 
 Plugin to handle routes in fastify automatically based on directory structure.
 
+## :warning: Version 5.0 - Fastify v5 Support
+
+Version 5.0.0 brings support for **Fastify v5** with several breaking changes and improvements:
+
+- **Node.js 20+** required
+- **ESM-only** module (no CommonJS support)
+- **Performance improvements** with parallel route loading
+- **Updated dependencies** for Fastify v5 ecosystem
+- See [MIGRATION.md](./MIGRATION.md) for upgrade guide from v3.x
+
 ## :newspaper: **[Full Documentation](https://giovannicardamone.github.io/fastify-autoroutes/)**
 
 [fastify-autoroutes](https://giovannicardamone.github.io/fastify-autoroutes/)
@@ -30,18 +40,27 @@ Plugin to handle routes in fastify automatically based on directory structure.
 npm install --save fastify-autoroutes
 ```
 
+**Requirements:**
+- Node.js >= 20.0.0
+- Fastify >= 5.0.0
+- ESM module system (add `"type": "module"` to package.json)
+
 ## :blue_book: Usage
 
 ### Register plugin
 
 ```js
-const fastify = require('fastify')
-const server = fastify()
+import Fastify from 'fastify'
+import autoroutes from 'fastify-autoroutes'
 
-server.register(require('fastify-autoroutes'), {
+const server = Fastify()
+
+await server.register(autoroutes, {
   dir: './<autoroutes-directory>', // relative to your cwd
   prefix: '/api', // optional, don't use if you do not need prefixes
 })
+
+await server.listen({ port: 3000 })
 ```
 
 ### Create file in autoroutes directory

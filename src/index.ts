@@ -1,11 +1,11 @@
 import createError from '@fastify/error'
 import type { FastifyInstance, RouteOptions } from 'fastify'
 import fastifyPlugin from 'fastify-plugin'
-import fs from 'fs'
+import fs from 'node:fs'
 import glob from 'glob-promise'
-import path from 'path'
-import process from 'process'
-
+import path from 'node:path'
+import process from 'node:process'
+import { pathToFileURL } from 'node:url'
 
 export const ERROR_LABEL = 'fastify-autoroutes'
 
@@ -92,11 +92,7 @@ interface FastifyAutoroutesOptions {
 }
 
 export default fastifyPlugin<FastifyAutoroutesOptions>(
-  async (
-    fastify: FastifyInstance,
-    options: FastifyAutoroutesOptions,
-    next: CallableFunction
-  ) => {
+  async (fastify: FastifyInstance, options: FastifyAutoroutesOptions) => {
     const { dir, prefix: routePrefix } = {
       ...options,
       dir: options.dir || './routes',
@@ -118,7 +114,7 @@ export default fastifyPlugin<FastifyAutoroutesOptions>(
         '1',
         `${ERROR_LABEL} dir ${dirPath} must be a directory`
       )
-      return next(new CustomError())
+      throw new CustomError()
     }
 
     if (!fs.statSync(dirPath).isDirectory()) {
@@ -126,7 +122,7 @@ export default fastifyPlugin<FastifyAutoroutesOptions>(
         '2',
         `${ERROR_LABEL} dir ${dirPath} must be a directory`
       )
-      return next(new CustomError())
+      throw new CustomError()
     }
 
     // glob returns ../../, but windows returns ..\..\
@@ -135,24 +131,14 @@ export default fastifyPlugin<FastifyAutoroutesOptions>(
     const routes = await glob(`${dirPath}/**/[!._]!(*.test).{ts,js}`)
     const routesModules: Record<string, StrictResource> = {}
 
-    // console.log({ routes })
-
-    for (const route of routes) {
-      let routeName = route
-        .replace(dirPath, '')
-        .replace('.js', '')
-        .replace('.ts', '')
-        .replace('index', '')
-        .split('/')
-        .map((part) => part.replace(/{(.+)}/g, ':$1'))
-        .join('/')
-
-      routeName = !routeName ? '/' : `${routePrefix}${routeName}`
-
-      // console.log({ routeName })
-
-      routesModules[routeName] = loadModule(routeName, route)(fastify)
-    }
+    // Load all routes in parallel for better performance
+    await Promise.all(
+      routes.map(async (route) => {
+        const routeName = computeRouteName(route, dirPath, routePrefix)
+        const moduleLoader = await loadModule(routeName, route)
+        routesModules[routeName] = moduleLoader(fastify)
+      })
+    )
 
     for (const [url, module] of Object.entries(routesModules)) {
       for (const [method, options] of Object.entries(module)) {
@@ -165,31 +151,79 @@ export default fastifyPlugin<FastifyAutoroutesOptions>(
     }
   },
   {
-    fastify: '>=4.0.0',
+    fastify: '>=5.0.0',
     name: 'fastify-autoroutes',
   }
 )
 
-function loadModule(
+function computeRouteName(
+  route: string,
+  dirPath: string,
+  routePrefix: string
+): string {
+  let routeName = route
+    .replace(dirPath, '')
+    .replace('.js', '')
+    .replace('.ts', '')
+    .replace('index', '')
+    .split('/')
+    .map((part) => part.replace(/{(.+)}/g, ':$1'))
+    .join('/')
+
+  return !routeName ? '/' : `${routePrefix}${routeName}`
+}
+
+interface RequireFunction {
+  (id: string): unknown
+  cache: Record<string, unknown>
+}
+
+async function loadModule(
   name: string,
-  path: string
-): (instance: FastifyInstance) => StrictResource {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const module = require(path)
+  modulePath: string
+): Promise<(instance: FastifyInstance) => StrictResource> {
+  let module: unknown
+
+  // Try require first (for test fixtures with special characters in paths)
+  // In Vitest forks pool, require bypasses Vite's URL encoding
+  try {
+    const requireFn = eval(
+      'typeof require !== "undefined" ? require : null'
+    ) as RequireFunction | null
+    if (requireFn) {
+      delete requireFn.cache[modulePath]
+      module = requireFn(modulePath)
+    } else {
+      throw new Error('require not available')
+    }
+  } catch {
+    // Fall back to dynamic import (for production ESM)
+    try {
+      const fileUrl = pathToFileURL(modulePath).href
+      module = await import(fileUrl)
+    } catch (error) {
+      throw new Error(
+        `${ERROR_LABEL}: failed to load module (${name}) ${modulePath}. ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      )
+    }
+  }
 
   if (typeof module === 'function') {
-    return module as (instance: any) => StrictResource
+    return module as (instance: FastifyInstance) => StrictResource
   }
 
   if (
     typeof module === 'object' &&
+    module !== null &&
     'default' in module &&
     typeof module.default === 'function'
   ) {
-    return module.default as (instance: any) => StrictResource
+    return module.default as (instance: FastifyInstance) => StrictResource
   }
 
   throw new Error(
-    `${ERROR_LABEL}: invalid route module definition (${name}) ${path}. Must export a function`
+    `${ERROR_LABEL}: invalid route module definition (${name}) ${modulePath}. Must export a function`
   )
 }

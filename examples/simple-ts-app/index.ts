@@ -7,4 +7,5 @@ server.register(autoroutes, {
   dir: './routes',
 })
 
-server.listen(9999)
+await server.listen({ port: 9999 })
+console.log('Server listening on http://localhost:9999')
