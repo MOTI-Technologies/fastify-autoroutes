@@ -23,7 +23,7 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
-        "docs": "docsify init ./docs",
+        "docs": "rm -rf ./docs/_sidebar.md && docsify generate ./docs",
         "docs:watch": "docsify serve ./docs",
         "prepare": "husky install",
         "prepublishOnly": "npm run build"
@@ -56,7 +56,8 @@
         "@typescript-eslint/parser": "^8.18.1",
         "@vitest/coverage-v8": "^2.1.8",
         "coveralls": "^3.1.0",
-        "docsify": "^4.11.4",
+        "docsify": "^4.13.1",
+        "docsify-cli": "^4.4.4",
         "eslint": "^9.16.0",
         "eslint-config-prettier": "^9.1.0",
         "fastify": "^5.2.0",
