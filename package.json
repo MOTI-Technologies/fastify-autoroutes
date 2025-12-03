@@ -1,92 +1,92 @@
 {
-    "name": "@moti-technologies/fastify-autoroutes",
-    "version": "5.0.0",
-    "description": "Map directory structure to routes",
-    "private": true,
-    "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
+  "name": "@moti-technologies/fastify-autoroutes",
+  "version": "5.0.1",
+  "description": "Map directory structure to routes",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "prettier": "@giovannicardamone/prettier-config",
+  "scripts": {
+    "lint": "eslint .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "docs": "rm -rf ./docs/_sidebar.md && docsify generate ./docs",
+    "docs:watch": "docsify serve ./docs",
+    "prepare": "husky install",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MOTI-Technologies/fastify-autoroutes.git"
+  },
+  "keywords": [
+    "fastify",
+    "fastify-plugin",
+    "fastify-autoroutes",
+    "autoroute",
+    "autorouting",
+    "autoroutes"
+  ],
+  "author": "Giovanni Cardamone",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MOTI-Technologies/fastify-autoroutes/issues"
+  },
+  "homepage": "https://github.com/MOTI-Technologies/fastify-autoroutes#readme",
+  "devDependencies": {
+    "@giovannicardamone/prettier-config": "^0.1.3",
+    "@types/node": "^20.17.9",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "coveralls": "^3.1.0",
+    "docsify": "^4.13.1",
+    "docsify-cli": "^4.4.4",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
+    "fastify": "^5.2.0",
+    "husky": "^7.0.4",
+    "light-my-request": "^6.3.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@fastify/error": "^4.0.0",
+    "fastify-plugin": "^5.0.1",
+    "glob-promise": "^6.0.7"
+  },
+  "peerDependencies": {
+    "fastify": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "contributors": [
+    {
+      "name": "Giovanni Cardamone",
+      "email": "g.cardamone2@gmail.com",
+      "url": "https://giovannicardamone.github.io"
     },
-    "engines": {
-        "node": ">=20.0.0"
-    },
-    "prettier": "@giovannicardamone/prettier-config",
-    "scripts": {
-        "lint": "eslint .",
-        "build": "tsc",
-        "build:watch": "tsc --watch",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "test:coverage": "vitest run --coverage",
-        "docs": "rm -rf ./docs/_sidebar.md && docsify generate ./docs",
-        "docs:watch": "docsify serve ./docs",
-        "prepare": "husky install",
-        "prepublishOnly": "npm run build"
-    },
-    "publishConfig": {
-        "registry": "https://npm.pkg.github.com"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/MOTI-Technologies/fastify-autoroutes.git"
-    },
-    "keywords": [
-        "fastify",
-        "fastify-plugin",
-        "fastify-autoroutes",
-        "autoroute",
-        "autorouting",
-        "autoroutes"
-    ],
-    "author": "Giovanni Cardamone",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/MOTI-Technologies/fastify-autoroutes/issues"
-    },
-    "homepage": "https://github.com/MOTI-Technologies/fastify-autoroutes#readme",
-    "devDependencies": {
-        "@giovannicardamone/prettier-config": "^0.1.3",
-        "@types/node": "^20.17.9",
-        "@typescript-eslint/eslint-plugin": "^8.18.1",
-        "@typescript-eslint/parser": "^8.18.1",
-        "@vitest/coverage-v8": "^2.1.8",
-        "coveralls": "^3.1.0",
-        "docsify": "^4.13.1",
-        "docsify-cli": "^4.4.4",
-        "eslint": "^9.16.0",
-        "eslint-config-prettier": "^9.1.0",
-        "fastify": "^5.2.0",
-        "husky": "^7.0.4",
-        "light-my-request": "^6.3.0",
-        "typescript": "^5.7.2",
-        "vitest": "^2.1.8"
-    },
-    "dependencies": {
-        "@fastify/error": "^4.0.0",
-        "fastify-plugin": "^5.0.1",
-        "glob-promise": "^6.0.7"
-    },
-    "peerDependencies": {
-        "fastify": "^5.0.0"
-    },
-    "files": [
-        "dist"
-    ],
-    "contributors": [
-        {
-            "name": "Giovanni Cardamone",
-            "email": "g.cardamone2@gmail.com",
-            "url": "https://giovannicardamone.github.io"
-        },
-        {
-            "name": "Gennaro Bosone",
-            "email": "gennaro.bs@gmail.com",
-            "url": "https://www.desidus.it"
-        }
-    ]
+    {
+      "name": "Gennaro Bosone",
+      "email": "gennaro.bs@gmail.com",
+      "url": "https://www.desidus.it"
+    }
+  ]
 }
