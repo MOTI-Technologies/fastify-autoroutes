@@ -1,6 +1,6 @@
 {
   "name": "@moti-technologies/fastify-autoroutes",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "Map directory structure to routes",
   "type": "module",
   "main": "./dist/index.js",
