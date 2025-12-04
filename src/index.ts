@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import glob from 'glob-promise';
 import path from 'node:path';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 
 export const ERROR_LABEL = 'fastify-autoroutes';
 
@@ -140,11 +141,20 @@ export default fastifyPlugin<FastifyAutoroutesOptions>(
 
       // console.log({ routeName })
 
-      routesModules[routeName] = loadModule(routeName, route)(fastify);
+      routesModules[routeName] = (await loadModule(routeName, route))(fastify);
     }
 
     for (const [url, module] of Object.entries(routesModules)) {
+      if (!module || typeof module !== 'object') {
+        throw new Error(`${ERROR_LABEL}: route module for ${url} did not return a valid route object`);
+      }
+
       for (const [method, options] of Object.entries(module)) {
+        if (typeof options !== 'object' || !options.handler) {
+          console.warn(`${ERROR_LABEL}: skipping invalid route definition for ${method.toUpperCase()} ${url}`, options);
+          continue;
+        }
+
         fastify.route({
           method: method.toUpperCase(),
           url: url,
@@ -159,17 +169,50 @@ export default fastifyPlugin<FastifyAutoroutesOptions>(
   }
 );
 
-function loadModule(name: string, path: string): (instance: FastifyInstance) => StrictResource {
-  // eslint-disable-next-line no-undef
-  const module = require(path);
+async function loadModule(name: string, modulePath: string): Promise<(instance: FastifyInstance) => StrictResource> {
+  let module: any;
 
+  try {
+    const fileUrl = pathToFileURL(modulePath).href;
+    module = await import(fileUrl);
+  } catch (error) {
+    throw new Error(
+      `${ERROR_LABEL}: failed to load module (${name}) ${modulePath}. ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+
+  // Check for ES6 default export first
+  if (typeof module === 'object' && module !== null && 'default' in module) {
+    if (typeof module.default === 'function') {
+      return module.default as (instance: any) => StrictResource;
+    }
+    // If default export is an object, check if it has a nested default (double wrapping from transpilation)
+    if (typeof module.default === 'object' && module.default !== null) {
+      // Handle nested default export (common with TypeScript/Babel transpilation)
+      if ('default' in module.default && typeof module.default.default === 'function') {
+        return module.default.default as (instance: any) => StrictResource;
+      }
+      // If it's a route object directly, return a function that returns it
+      return ((_instance: any) => module.default) as (instance: any) => StrictResource;
+    }
+  }
+
+  // Check for CommonJS/direct function export
   if (typeof module === 'function') {
     return module as (instance: any) => StrictResource;
   }
 
-  if (typeof module === 'object' && 'default' in module && typeof module.default === 'function') {
-    return module.default as (instance: any) => StrictResource;
-  }
+  // Provide detailed error about what was found
+  const moduleType = typeof module;
+  const hasDefault = module && 'default' in module;
+  const defaultType = hasDefault ? typeof module.default : 'N/A';
+  const keys = module && typeof module === 'object' ? Object.keys(module).join(', ') : 'N/A';
 
-  throw new Error(`${ERROR_LABEL}: invalid route module definition (${name}) ${path}. Must export a function`);
+  throw new Error(
+    `${ERROR_LABEL}: invalid route module definition (${name}) ${modulePath}. ` +
+      `Must export a function. Found: moduleType=${moduleType}, hasDefault=${hasDefault}, ` +
+      `defaultType=${defaultType}, keys=[${keys}]`
+  );
 }
