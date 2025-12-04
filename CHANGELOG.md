@@ -1,3 +1,22 @@
+## [5.0.3](https://github.com/MOTI-Technologies/fastify-autoroutes/compare/v5.0.2...v5.0.3) (2025-12-04)
+
+
+### Bug Fixes
+
+* revert back to commonjs ([fd89075](https://github.com/MOTI-Technologies/fastify-autoroutes/commit/fd890754be1da3a36e5470c8740468b2bd40e7dd))
+* update the package name ([c4b46ce](https://github.com/MOTI-Technologies/fastify-autoroutes/commit/c4b46ced5db478340798ad65df6d1bfb004f63cf))
+
+
+
+## [5.0.2](https://github.com/MOTI-Technologies/fastify-autoroutes/compare/v5.0.1...v5.0.2) (2025-12-03)
+
+
+### Bug Fixes
+
+* add require and default to exports for better compatibility ([7b28fcf](https://github.com/MOTI-Technologies/fastify-autoroutes/commit/7b28fcf4b5357f89b18bb1fc3e37180b7271c5dc))
+
+
+
 ## [5.0.1](https://github.com/MOTI-Technologies/fastify-autoroutes/compare/v5.0.0...v5.0.1) (2025-12-03)
 
 
