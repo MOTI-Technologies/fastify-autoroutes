@@ -37,7 +37,7 @@ Version 5.0.0 brings support for **Fastify v5** with several breaking changes an
 ## :rocket: Install
 
 ```sh
-npm install --save fastify-autoroutes
+npm i @moti-technologies/fastify-autoroutes
 ```
 
 **Requirements:**
