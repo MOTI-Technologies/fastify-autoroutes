@@ -16,7 +16,6 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "prettier": "@giovannicardamone/prettier-config",
   "scripts": {
     "lint": "eslint .",
     "build": "tsc",

@@ -1,16 +1,16 @@
-import fastify, { FastifyInstance } from 'fastify'
-import { Resource } from '../../../../../dist'
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { Resource } from '../../../../../dist';
 
 interface Params {
-  userId: string
+  userId: string;
 }
 
 export default (fastify: FastifyInstance) => {
   return <Resource>{
     get: {
-      handler: <Params>(request, reply) => {
-        reply.send(`hello user ${request.params.userId}`)
+      handler: (request: FastifyRequest<{ Params: Params }>, reply: FastifyReply) => {
+        reply.send(`hello user ${request.params.userId}`);
       },
     },
-  }
-}
+  };
+};
