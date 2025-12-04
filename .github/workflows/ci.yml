@@ -1,93 +1,91 @@
 name: CI
 
 on:
-    push:
-        branches:
-            - main
-            - master
-        paths-ignore:
-            - "docs/**"
-            - "*.md"
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
 
 jobs:
-    # build / test
-    Build:
-        name: Build and Test Package
-        runs-on: ubuntu-latest
-        steps:
-            # Checkout Repo
-            - uses: actions/checkout@v4
+  # build / test
+  Build:
+    name: Build and Test Package
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout Repo
+      - uses: actions/checkout@v4
 
-            # Setup Node
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: 20
+      # Setup Node
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-            # Install Dependencies
-            - run: npm ci
+      # Install Dependencies
+      - run: npm ci
 
-            # Lint Code
-            - run: npm run lint
+      # Lint Code
+      - run: npm run lint
 
-            # Build Package
-            - run: npm run build
+      # Build Package
+      - run: npm run build
 
-            # Run Tests with Coverage
-            - run: npm run test:coverage
+      # Run Tests with Coverage
+      - run: npm run test:coverage
 
-            # Report Coverage
-            - name: Coveralls GitHub Action
-              uses: coverallsapp/github-action@v2
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
+      # Report Coverage
+      - name: Coveralls GitHub Action
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-    # Publish to GitHub Packages
-    Publish:
-        needs: Build
-        if: github.ref == 'refs/heads/master'
-        name: Publish to GitHub Packages
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-            packages: write
-        steps:
-            # Checkout Repo
-            - uses: actions/checkout@v4
+  # Publish to GitHub Packages
+  Publish:
+    needs: Build
+    if: github.ref == 'refs/heads/master'
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      # Checkout Repo
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            # Setup Node with GitHub Packages registry
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: 20
-                  registry-url: "https://npm.pkg.github.com"
-                  scope: "@moti-technologies"
+      # Setup Node with GitHub Packages registry
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@moti-technologies"
 
-            # Show current package
-            - name: cat package.json
-              run: cat ./package.json
+      # Install Dependencies
+      - run: npm ci
 
-            # Install Dependencies
-            - run: npm ci
+      # Build Package
+      - run: npm run build
 
-            # Build Package
-            - run: npm run build
+      # Bump version, tag commit and generate a changelog
+      - name: Conventional Changelog Action
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-message: "chore(release): {version}"
+          tag-prefix: "v"
+          output-file: "CHANGELOG.md"
+          release-count: "10"
+          skip-on-empty: "true"
+          skip-version-file: "false"
+          skip-commit: "false"
 
-            # Bump version, tag commit and generate a changelog
-            - name: Conventional Changelog Action
-              id: changelog
-              uses: TriPSs/conventional-changelog-action@v5
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  git-message: "chore(release): {version}"
-                  tag-prefix: "v"
-                  output-file: "CHANGELOG.md"
-                  release-count: "10"
-                  skip-on-empty: "true"
-                  skip-version-file: "false"
-                  skip-commit: "false"
-
-            # Publish to GitHub Packages
-            - name: Publish to GitHub Packages
-              if: steps.changelog.outputs.skipped == 'false'
-              run: npm publish
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Publish to GitHub Packages
+      - name: Publish to GitHub Packages
+        if: steps.changelog.outputs.skipped == 'false'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
