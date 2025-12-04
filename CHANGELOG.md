@@ -1,3 +1,13 @@
+## [5.0.4](https://github.com/MOTI-Technologies/fastify-autoroutes/compare/v5.0.3...v5.0.4) (2025-12-04)
+
+
+### Bug Fixes
+
+* Remove tsconfig.tsbuildinfo from tracking ([c78df4f](https://github.com/MOTI-Technologies/fastify-autoroutes/commit/c78df4fff2014d2a3083185ee5aa909a60a1f28c))
+* route did not load correctly in production ([546c5c5](https://github.com/MOTI-Technologies/fastify-autoroutes/commit/546c5c5b9eeee44d23af47c672a415c70c7f505f))
+
+
+
 ## [5.0.3](https://github.com/MOTI-Technologies/fastify-autoroutes/compare/v5.0.2...v5.0.3) (2025-12-04)
 
 
